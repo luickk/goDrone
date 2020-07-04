@@ -1,9 +1,10 @@
 package main
 
 import (
-	// utils "goDrone/utils"
+	"fmt"
+	"goDjiNazaGpsDecoder/djiNazaGpsDecoder"
+	utils "goDrone/utils"
 	"log"
-	"math/rand"
 	"os"
 	rcfNode "rcf/rcfNode"
 	rcfUtil "rcf/rcfUtil"
@@ -38,18 +39,33 @@ func main() {
 	// creating topic by sending cmd to node
 	rcfNode.TopicCreate(nodeInstance, "gpsData")
 
+	var sRead djiNazaGpsDecoder.SerialRead
+	var decInfo djiNazaGpsDecoder.DecodedInformation
+
+	djiNazaGpsDecoder.OpenSerial(&sRead, "/dev/serial0")
+
 	// loop to create sample data which is pushed to topic
 	for {
-		// generating random int
-		alt := rand.Intn(200)
+		djiNazaGpsDecoder.ReadByte(&sRead, &decInfo)
+
+		fmt.Printf("Sats: %d \n", int(decInfo.Satellites))
+		fmt.Printf("Heading: %d \n", int(decInfo.Heading))
+		fmt.Printf("Alt: %d \n", int(decInfo.Altitude))
+		fmt.Printf("Speed: %d \n", int(decInfo.Speed))
+		fmt.Printf("Lat: %e \n", decInfo.Latitude)
+		fmt.Printf("Lon: %e \n", decInfo.Longitude)
+		fmt.Printf("Time: %d, %d, %d, %d, %d, %d \n", int(decInfo.Year), int(decInfo.Month), int(decInfo.Day), int(decInfo.Hour), int(decInfo.Minute), int(decInfo.Second))
+		fmt.Printf("HW Version: %d, SW Version: %d \n", int(decInfo.HardwareVersion.Version), int(decInfo.FirmwareVersion.Version))
 
 		// putting sample data into map
 		dataMap := make(map[string]string)
-		dataMap["lat"] = strconv.Itoa(alt)
-		dataMap["lon"] = strconv.Itoa(alt)
-		dataMap["heading"] = strconv.Itoa(alt)
-		dataMap["alt"] = strconv.Itoa(alt)
-		dataMap["speed"] = strconv.Itoa(alt)
+		dataMap["lat"] = string(utils.Float64bytes(decInfo.Latitude))
+		dataMap["lon"] = string(utils.Float64bytes(decInfo.Longitude))
+
+		dataMap["heading"] = strconv.Itoa(int(decInfo.Heading))
+		dataMap["alt"] = strconv.Itoa(int(decInfo.Altitude))
+		dataMap["speed"] = strconv.Itoa(int(decInfo.Speed))
+		dataMap["sats"] = strconv.Itoa(int(decInfo.Satellites))
 
 		encodedData, err := rcfUtil.GlobMapEncode(dataMap)
 		encodedDataSlice := []byte(encodedData.Bytes())
