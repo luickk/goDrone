@@ -33,9 +33,11 @@ func main() {
 
 	// initiating fly to latitude longitude service
 	// service args: alt, int32
-	rcfNode.ServiceCreate(nodeInstance, "flyToLatLon", func(params []byte, n rcfNode.Node) []byte {
+	rcfNode.ServiceCreate(nodeInstance, "flytolatlon", func(params []byte, n rcfNode.Node) []byte {
+		println(len(params))
+		println(params[8])
 		if len(params) == 16 {
-			lat := utils.Float64frombytes(params[0:7])
+			lat := utils.Float64frombytes(params[:7])
 			lon := utils.Float64frombytes(params[8:15])
 
 			InfoLogger.Println("flying to lat %f lon %f", lat, lon)
@@ -44,17 +46,12 @@ func main() {
 	})
 
 	// initiating service to take off with the drone
-	rcfNode.ServiceCreate(nodeInstance, "takeOff", func(params []byte, n rcfNode.Node) []byte {
-
+	rcfNode.ServiceCreate(nodeInstance, "takeoff", func(params []byte, n rcfNode.Node) []byte {
 		if len(params) == 8 {
 			alt := utils.ByteArrayToInt(params)
-
-			InfoLogger.Println("taking off to height %d", alt)
+			InfoLogger.Println("taking off to height ", alt)
 		}
-
-		InfoLogger.Println("taking off")
-		println(string(params))
-		return []byte("")
+		return []byte("taken off")
 	})
 
 	// initiating service to land drone
@@ -65,7 +62,7 @@ func main() {
 	})
 
 	// initiating service to turn drone
-	rcfNode.ServiceCreate(nodeInstance, "turnTo", func(params []byte, n rcfNode.Node) []byte {
+	rcfNode.ServiceCreate(nodeInstance, "turnto", func(params []byte, n rcfNode.Node) []byte {
 		if len(params) == 8 {
 			deg := utils.ByteArrayToInt(params)
 			InfoLogger.Println("turning to %d", deg)
@@ -74,7 +71,7 @@ func main() {
 	})
 
 	// initiating service to change altitude
-	rcfNode.ServiceCreate(nodeInstance, "changeAlt", func(params []byte, n rcfNode.Node) []byte {
+	rcfNode.ServiceCreate(nodeInstance, "changealt", func(params []byte, n rcfNode.Node) []byte {
 		if len(params) == 8 {
 			alt := utils.ByteArrayToInt(params)
 			InfoLogger.Println("changing alt to %d", alt)
@@ -85,7 +82,7 @@ func main() {
 	})
 
 	// initiating service to hold current drones position
-	rcfNode.ServiceCreate(nodeInstance, "holdPos", func(params []byte, n rcfNode.Node) []byte {
+	rcfNode.ServiceCreate(nodeInstance, "holdpos", func(params []byte, n rcfNode.Node) []byte {
 		InfoLogger.Println("holding pos")
 		println(string(params))
 		return []byte("")
