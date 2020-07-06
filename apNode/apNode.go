@@ -32,7 +32,6 @@ func main() {
 	rcfNode.Init(nodeInstance)
 
 	rcfNode.ServiceCreate(nodeInstance, "flyMission", func(params []byte, n rcfNode.Node) []byte {
-
 		InfoLogger.Println("flying mission ")
 		println(string(params))
 		return []byte("")

@@ -49,10 +49,10 @@ func main() {
 
 		} else if string(args[0]) == "flytolatlon" {
 			if len(args) == 3 {
-				intLat, latErr := strconv.ParseFloat(args[1], 64)
-				intLon, lonErr := strconv.ParseFloat(args[2], 64)
+				lat, latErr := strconv.ParseFloat(args[1], 64)
+				lon, lonErr := strconv.ParseFloat(args[2], 64)
 				if latErr == nil && lonErr == nil {
-					result := rcfNodeClient.ServiceExec(client, "flytolatlon", append(utils.Float64bytes(intLat), utils.Float64bytes(intLon)...))
+					result := rcfNodeClient.ServiceExec(client, "flytolatlon", utils.EncodeLatLonAlt(lat, lon, 0))
 					fmt.Println(string(result))
 				} else {
 					println("takoff alt conv error")

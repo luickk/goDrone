@@ -1,7 +1,7 @@
 package main
 
 import (
-	utils "goDrone/utils"
+	utils "goDrone/utils/utils"
 	"log"
 	"os"
 	rcfNode "rcf/rcfNode"
@@ -34,15 +34,13 @@ func main() {
 	// initiating fly to latitude longitude service
 	// service args: alt, int32
 	rcfNode.ServiceCreate(nodeInstance, "flytolatlon", func(params []byte, n rcfNode.Node) []byte {
-		println(len(params))
-		println(params[8])
-		if len(params) == 16 {
-			lat := utils.Float64frombytes(params[:7])
-			lon := utils.Float64frombytes(params[8:15])
-
-			InfoLogger.Println("flying to lat %f lon %f", lat, lon)
+		lat, lon, _ := utils.DecodeLatLonAlt(params)
+		if lat != 0 && lon != 0 {
+			InfoLogger.Println("flying to lat/ lon:", lat, lon)
+		} else {
+			WarningLogger.Println("flytolatlon deconding err")
 		}
-		return []byte("")
+		return []byte("flew to given lat lon")
 	})
 
 	// initiating service to take off with the drone
