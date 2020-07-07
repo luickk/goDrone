@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	utils "goDrone/utils"
+	utils "goDrone/utils/utils"
 	"os"
 	rcfNodeClient "rcf/rcfNodeClient"
 	"strconv"
@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	client := rcfNodeClient.NodeOpenConn(30)
+	client := rcfNodeClient.NodeOpenConn(31)
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -66,7 +66,13 @@ func main() {
 				data_map["cli"] = args[2]
 				rcfNodeClient.TopicPublishGlobData(client, args[1], data_map)
 			}
-		} else if string(args[0]) == "endcom" {
+		} else if string(args[0]) == "gpulld" {
+			if len(args) >=2 {
+			  nele,_ := strconv.Atoi(args[2])
+			  elements := rcfNodeClient.TopicPullGlobData(client, nele, args[1])
+			  fmt.Println(elements)
+			}
+		}  else if string(args[0]) == "endcom" {
 			if len(args) >= 0 {
 				rcfNodeClient.NodeCloseConn(client)
 				return

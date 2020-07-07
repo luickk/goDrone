@@ -40,7 +40,7 @@ func main() {
 	// creating topic by sending cmd to node
 	rcfNode.TopicCreate(nodeInstance, "gpsData")
 
-	type homePos struct {
+	type homePosition struct {
 		Lat float64
 		Lon float64
 		Alt int
@@ -52,7 +52,7 @@ func main() {
 	var sRead djiNazaGpsDecoder.SerialRead
 	var decInfo djiNazaGpsDecoder.DecodedInformation
 
-	var homePos homePos
+	var homePos homePosition
 
 	djiNazaGpsDecoder.OpenSerial(&sRead, "/dev/serial0")
 
@@ -71,8 +71,8 @@ func main() {
 
 		// putting sample data into map
 		dataMap := make(map[string]string)
-		dataMap["lat"] = string(utils.Float64bytes(decInfo.Latitude))
-		dataMap["lon"] = string(utils.Float64bytes(decInfo.Longitude))
+		dataMap["lat"] = string(utils.Float64bytes(float64(decInfo.Latitude)))
+		dataMap["lon"] = string(utils.Float64bytes(float64(decInfo.Longitude)))
 
 		dataMap["heading"] = strconv.Itoa(int(decInfo.Heading))
 		dataMap["alt"] = strconv.Itoa(int(decInfo.Altitude))
@@ -94,7 +94,7 @@ func main() {
 	}
 
 	rcfNode.ActionCreate(nodeInstance, "markhome", func(params []byte, node rcfNode.Node) {
-		homePos.Lat, homePos.Lon, homePos.Alt = utils.DecodedLatLonAlt(params)
+		homePos.Lat, homePos.Lon, homePos.Alt = utils.DecodeLatLonAlt(params)
 	})
 
 	rcfNode.ServiceCreate(nodeInstance, "calcDist", func(params []byte, node rcfNode.Node) []byte {
@@ -124,6 +124,8 @@ func main() {
 		x1, y1, z1 := 1.1042590709397183e+06, -4.824765955871677e+06, 4.0093940281868847e+06
 		lat5, lon5, alt5 := geo1.ToLLA(x1, y1, z1)
 		fmt.Printf("lat5 = %v lon5 = %v alt3 = %v\n", lat5, lon5, alt5)
+
+		return []byte("calced")
 	})
 
 	// halting node so it doesn't quit
