@@ -11,7 +11,8 @@ import (
 )
 
 func main() {
-	client := rcfNodeClient.NodeOpenConn(31)
+	ccClient := rcfNodeClient.NodeOpenConn(30)
+	gpsClient := rcfNodeClient.NodeOpenConn(31)
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -24,7 +25,7 @@ func main() {
 			if len(args) == 2 {
 				intAlt, err := strconv.Atoi(args[1])
 				if err == nil {
-					result := rcfNodeClient.ServiceExec(client, "takeoff", utils.IntToByteArray(int64(intAlt)))
+					result := rcfNodeClient.ServiceExec(ccClient, "takeoff", utils.IntToByteArray(int64(intAlt)))
 					fmt.Println(string(result))
 				} else {
 					println("takoff alt conv error")
@@ -33,12 +34,14 @@ func main() {
 				println("missing arg alt for service takeoff")
 			}
 		} else if string(args[0]) == "land" {
-
+		
+		} else if string(args[0]) == "markhomepos" {
+			rcfNodeClient.ActionExec(ccClient, "markhomepos", []byte(""))
 		} else if string(args[0]) == "turnto" {
 			if len(args) == 2 {
 				intAlt, err := strconv.Atoi(args[1])
 				if err == nil {
-					result := rcfNodeClient.ServiceExec(client, "turnto", utils.IntToByteArray(int64(intAlt)))
+					result := rcfNodeClient.ServiceExec(ccClient, "turnto", utils.IntToByteArray(int64(intAlt)))
 					fmt.Println(string(result))
 				} else {
 					println("turnto deg conv error")
@@ -52,7 +55,7 @@ func main() {
 				lat, latErr := strconv.ParseFloat(args[1], 64)
 				lon, lonErr := strconv.ParseFloat(args[2], 64)
 				if latErr == nil && lonErr == nil {
-					result := rcfNodeClient.ServiceExec(client, "flytolatlon", utils.EncodeLatLonAlt(lat, lon, 0))
+					result := rcfNodeClient.ServiceExec(ccClient, "flytolatlon", utils.EncodeLatLonAlt(lat, lon, 0))
 					fmt.Println(string(result))
 				} else {
 					println("takoff alt conv error")
@@ -64,21 +67,20 @@ func main() {
 			if len(args) >= 2 {
 				data_map := make(map[string]string)
 				data_map["cli"] = args[2]
-				rcfNodeClient.TopicPublishGlobData(client, args[1], data_map)
+				rcfNodeClient.TopicPublishGlobData(ccClient, args[1], data_map)
 			}
-		} else if string(args[0]) == "gpulld" {
-			if len(args) >=2 {
-			  nele,_ := strconv.Atoi(args[2])
-			  elements := rcfNodeClient.TopicPullGlobData(client, nele, args[1])
-			  fmt.Println(elements)
-			}
+		} else if string(args[0]) == "getgps" {
+			elements := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
+			fmt.Println(elements)
 		}  else if string(args[0]) == "endcom" {
 			if len(args) >= 0 {
-				rcfNodeClient.NodeCloseConn(client)
+				rcfNodeClient.NodeCloseConn(ccClient)
 				return
 			}
+		} else {
+			fmt.Println("command not known")	
 		}
 	}
 
-	rcfNodeClient.NodeCloseConn(client)
+	rcfNodeClient.NodeCloseConn(ccClient)
 }
