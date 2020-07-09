@@ -20,8 +20,15 @@ func main() {
 		cmd_txt, _ := reader.ReadString('\n')
 		cmd_txt = strings.Replace(cmd_txt, "\n", "", -1)
 		args := strings.Split(cmd_txt, " ")
-
-		if string(args[0]) == "takeoff" {
+		if string(args[0]) == "reconnect" {
+			if len(args) == 2 {
+				if args[1] == "gps" {
+					gpsClient = rcfNodeClient.NodeOpenConn(31)
+				} else if args[1] == "cc" {
+					ccClient = rcfNodeClient.NodeOpenConn(30)
+				}
+			}
+		} else if string(args[0]) == "takeoff" {
 			if len(args) == 2 {
 				intAlt, err := strconv.Atoi(args[1])
 				if err == nil {

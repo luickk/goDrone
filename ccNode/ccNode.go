@@ -2,6 +2,7 @@ package main
 
 import (
 	utils "goDrone/utils/utils"
+	// naza "goNazaV2Interface/goNazaV2Interface"
 	"log"
 	"os"
 	rcfNode "rcf/rcfNode"
@@ -31,6 +32,12 @@ func main() {
 	// strarting action and topic handlers
 	rcfNode.Init(nodeInstance)
 
+	// arming motors 
+	rcfNode.ActionCreate(nodeInstance, "armmotors", func(params []byte, n rcfNode.Node) {
+		
+	})
+
+
 	// initiating fly to latitude longitude service
 	// service args: alt, int32
 	rcfNode.ServiceCreate(nodeInstance, "flytolatlon", func(params []byte, n rcfNode.Node) []byte {
@@ -56,34 +63,34 @@ func main() {
 	rcfNode.ServiceCreate(nodeInstance, "land", func(params []byte, n rcfNode.Node) []byte {
 
 		InfoLogger.Println("landing")
-		return []byte("")
+		return []byte("landed")
 	})
 
 	// initiating service to turn drone
 	rcfNode.ServiceCreate(nodeInstance, "turnto", func(params []byte, n rcfNode.Node) []byte {
 		if len(params) == 8 {
 			deg := utils.ByteArrayToInt(params)
-			InfoLogger.Println("turning to %d", deg)
+			InfoLogger.Println("turning to ", deg)
 		}
-		return []byte("")
+		return []byte("turned")
 	})
 
 	// initiating service to change altitude
 	rcfNode.ServiceCreate(nodeInstance, "changealt", func(params []byte, n rcfNode.Node) []byte {
 		if len(params) == 8 {
 			alt := utils.ByteArrayToInt(params)
-			InfoLogger.Println("changing alt to %d", alt)
+			InfoLogger.Println("changing alt to ", alt)
 		}
 		InfoLogger.Println("changing alt")
 		println(string(params))
-		return []byte("")
+		return []byte("changed alt")
 	})
 
 	// initiating service to hold current drones position
 	rcfNode.ServiceCreate(nodeInstance, "holdpos", func(params []byte, n rcfNode.Node) []byte {
 		InfoLogger.Println("holding pos")
 		println(string(params))
-		return []byte("")
+		return []byte("holding pos")
 	})
 
 	// halting node so it doesn't quit
