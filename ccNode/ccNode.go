@@ -2,9 +2,12 @@ package main
 
 import (
 	utils "goDrone/utils/utils"
-	// naza "goNazaV2Interface/goNazaV2Interface"
+	naza "goNazaV2Interface/goNazaV2Interface"
+	rcfNodeClient "rcf/rcfNodeClient"
+	"time"
 	"log"
 	"os"
+	"strconv"
 	rcfNode "rcf/rcfNode"
 )
 
@@ -32,9 +35,57 @@ func main() {
 	// strarting action and topic handlers
 	rcfNode.Init(nodeInstance)
 
+	var interfaceConf naza.InterfaceConfig
+
+	interfaceConf.StickDir = make(map[int]string)
+
+	interfaceConf.StickDir[naza.Achannel] = "rev"
+	interfaceConf.StickDir[naza.Echannel] = "norm"
+	interfaceConf.StickDir[naza.Tchannel] = "norm"
+	interfaceConf.StickDir[naza.Rchannel] = "rev"
+
+
+	interfaceConf.LeftStickMaxPos = make(map[int]int)
+	interfaceConf.NeutralStickPos = make(map[int]int)
+	interfaceConf.RightStickMaxPos = make(map[int]int)
+
+	// key: channel, value: stick max pos
+	interfaceConf.LeftStickMaxPos[naza.Achannel] = 400
+	interfaceConf.NeutralStickPos[naza.Achannel] = 315
+	interfaceConf.RightStickMaxPos[naza.Achannel] = 320
+
+	interfaceConf.LeftStickMaxPos[naza.Echannel] = 400
+	interfaceConf.NeutralStickPos[naza.Echannel] = 315
+	interfaceConf.RightStickMaxPos[naza.Echannel] = 220
+
+	interfaceConf.LeftStickMaxPos[naza.Tchannel] = 400
+	interfaceConf.NeutralStickPos[naza.Tchannel] = 0
+	interfaceConf.RightStickMaxPos[naza.Tchannel] = 230
+
+	interfaceConf.LeftStickMaxPos[naza.Rchannel] = 400
+	interfaceConf.NeutralStickPos[naza.Rchannel] = 315
+	interfaceConf.RightStickMaxPos[naza.Rchannel] = 220
+
+	interfaceConf.GpsModeFlipSwitchDutyCycle = 390
+	interfaceConf.FailsafeModeFlipSwitchDutyCycle = 350
+	interfaceConf.SelectableModeFlipSwitchDutyCycle = 250
+
+	if !naza.InitPCA9685(&interfaceConf) {
+		ErrorLogger.Println("failed to init PCA9685")
+	} else {
+		if !naza.InitNaza(&interfaceConf) {
+			ErrorLogger.Println("failed to init naza")
+		}	
+	}
+	
+	gpsClient, gpsConnected := rcfNodeClient.NodeOpenConn(31)
+	if !gpsConnected {
+		ErrorLogger.Println("could not connect to gps node")
+	}
+
 	// arming motors 
 	rcfNode.ActionCreate(nodeInstance, "armmotors", func(params []byte, n rcfNode.Node) {
-		
+		naza.ArmMotors(&interfaceConf)
 	})
 
 
@@ -55,12 +106,29 @@ func main() {
 		if len(params) == 8 {
 			alt := utils.ByteArrayToInt(params)
 			InfoLogger.Println("taking off to height ", alt)
+
+			naza.ArmMotors(&interfaceConf)
+			naza.SetThrottle(&interfaceConf, 50)
+			time.Sleep(5*time.Second)
+			naza.SetThrottle(&interfaceConf, 60)
+			time.Sleep(3*time.Second)
+			
+			if (naza.SetPitch(&interfaceConf, 0) && naza.SetRoll(&interfaceConf, 0) && naza.SetYaw(&interfaceConf, 0) && naza.SetThrottle(&interfaceConf, 50)) {
+				InfoLogger.Println("set stick pos to neutral")
+			} else {
+				InfoLogger.Println("failed to set stick pos to neutral")
+			}
+			naza.SetFlightMode(&interfaceConf, "gps")
+
+			// todo, alt loop
 		}
 		return []byte("taken off")
 	})
 
 	// initiating service to land drone
 	rcfNode.ServiceCreate(nodeInstance, "land", func(params []byte, n rcfNode.Node) []byte {
+
+		naza.SetFlightMode(&interfaceConf, "failsafe")
 
 		InfoLogger.Println("landing")
 		return []byte("landed")
@@ -71,6 +139,11 @@ func main() {
 		if len(params) == 8 {
 			deg := utils.ByteArrayToInt(params)
 			InfoLogger.Println("turning to ", deg)
+			currentDir, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
+			println(currentDir)
+
+			// ll := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
+			// println(ll["dir"])
 		}
 		return []byte("turned")
 	})
@@ -87,10 +160,15 @@ func main() {
 	})
 
 	// initiating service to hold current drones position
-	rcfNode.ServiceCreate(nodeInstance, "holdpos", func(params []byte, n rcfNode.Node) []byte {
+	rcfNode.ActionCreate(nodeInstance, "holdpos", func(params []byte, n rcfNode.Node) {
 		InfoLogger.Println("holding pos")
-		println(string(params))
-		return []byte("holding pos")
+
+		if (naza.SetPitch(&interfaceConf, 0) && naza.SetRoll(&interfaceConf, 0) && naza.SetYaw(&interfaceConf, 0) && naza.SetThrottle(&interfaceConf, 50)) {
+			InfoLogger.Println("set stick pos to neutral")
+		} else {
+			InfoLogger.Println("failed to set stick pos to neutral")
+		}
+		naza.SetFlightMode(&interfaceConf, "gps")
 	})
 
 	// halting node so it doesn't quit

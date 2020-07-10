@@ -11,9 +11,13 @@ import (
 )
 
 func main() {
-	ccClient := rcfNodeClient.NodeOpenConn(30)
-	gpsClient := rcfNodeClient.NodeOpenConn(31)
-
+	ccClient, ccConnected := rcfNodeClient.NodeOpenConn(30)
+	gpsClient, gpsConnected := rcfNodeClient.NodeOpenConn(31)
+	if !ccConnected {
+		println("cc conn failed")
+	}  else if !gpsConnected {
+		println("gps conn failed")
+	}
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print("Enter command: ")
@@ -23,12 +27,17 @@ func main() {
 		if string(args[0]) == "reconnect" {
 			if len(args) == 2 {
 				if args[1] == "gps" {
-					gpsClient = rcfNodeClient.NodeOpenConn(31)
+					gpsClient, gpsConnected = rcfNodeClient.NodeOpenConn(31)
 				} else if args[1] == "cc" {
-					ccClient = rcfNodeClient.NodeOpenConn(30)
+					ccClient, ccConnected = rcfNodeClient.NodeOpenConn(30)
+				}
+				if !ccConnected {
+					println("cc conn failed")
+				}  else if !gpsConnected {
+					println("gps conn failed")
 				}
 			}
-		} else if string(args[0]) == "takeoff" {
+		} else if string(args[0]) == "takeoff" && ccConnected{
 			if len(args) == 2 {
 				intAlt, err := strconv.Atoi(args[1])
 				if err == nil {
@@ -40,11 +49,11 @@ func main() {
 			} else {
 				println("missing arg alt for service takeoff")
 			}
-		} else if string(args[0]) == "land" {
+		} else if string(args[0]) == "land"  && ccConnected{
 		
-		} else if string(args[0]) == "markhomepos" {
+		} else if string(args[0]) == "markhomepos"  && gpsConnected{
 			rcfNodeClient.ActionExec(ccClient, "markhomepos", []byte(""))
-		} else if string(args[0]) == "turnto" {
+		} else if string(args[0]) == "turnto" && ccConnected {
 			if len(args) == 2 {
 				intAlt, err := strconv.Atoi(args[1])
 				if err == nil {
@@ -57,7 +66,7 @@ func main() {
 				println("missing arg deg for service turnto")
 			}
 
-		} else if string(args[0]) == "flytolatlon" {
+		} else if string(args[0]) == "flytolatlon" && ccConnected{
 			if len(args) == 3 {
 				lat, latErr := strconv.ParseFloat(args[1], 64)
 				lon, lonErr := strconv.ParseFloat(args[2], 64)
@@ -70,18 +79,19 @@ func main() {
 			} else {
 				println("missing arfs lat lon for service flytolatlon")
 			}
-		} else if string(args[0]) == "listtopics" {
+		} else if string(args[0]) == "listtopics"  && ccConnected{
 			if len(args) >= 2 {
 				data_map := make(map[string]string)
 				data_map["cli"] = args[2]
 				rcfNodeClient.TopicPublishGlobData(ccClient, args[1], data_map)
 			}
-		} else if string(args[0]) == "getgps" {
+		} else if string(args[0]) == "getgps"  && gpsConnected{
 			elements := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
 			fmt.Println(elements)
 		}  else if string(args[0]) == "endcom" {
 			if len(args) >= 0 {
 				rcfNodeClient.NodeCloseConn(ccClient)
+				rcfNodeClient.NodeCloseConn(gpsClient)
 				return
 			}
 		} else {
