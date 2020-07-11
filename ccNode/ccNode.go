@@ -4,6 +4,7 @@ import (
 	utils "goDrone/utils/utils"
 	naza "goNazaV2Interface/goNazaV2Interface"
 	rcfNodeClient "rcf/rcfNodeClient"
+	ellipsoid "goDrone/utils/ellipsoid"
 	"time"
 	"log"
 	"os"
@@ -92,12 +93,57 @@ func main() {
 	// initiating fly to latitude longitude service
 	// service args: alt, int32
 	rcfNode.ServiceCreate(nodeInstance, "flytolatlon", func(params []byte, n rcfNode.Node) []byte {
-		lat, lon, _ := utils.DecodeLatLonAlt(params)
-		if lat != 0 && lon != 0 {
-			InfoLogger.Println("flying to lat/ lon:", lat, lon)
+		targetLat, targetLon, _ := utils.DecodeLatLonAlt(params)
+		if targetLat != 0 && targetLon != 0 {
+			InfoLogger.Println("flying to lat/ lon:", targetLat, targetLon)
 		} else {
 			WarningLogger.Println("flytolatlon deconding err")
 		}
+		
+		liveDiff := 360
+		targetDiffAccuracy := 30 
+		targetDistanceAccuracy := 10
+		yawTargetLocked := false
+		distanceTargetLocked := false
+		targetDistance, targetDir := 0.0, 0.0
+
+		for !distanceTargetLocked {
+			currentLat, _ := strconv.ParseFloat(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["lat"], 64)
+			currentLon, _ := strconv.ParseFloat(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["lon"], 64)
+			
+			// Create Ellipsoid object with WGS84-ellipsoid,
+			// angle units are degrees, distance units are meter.
+			geo1 := ellipsoid.Init("WGS84", ellipsoid.Degrees, ellipsoid.Meter, ellipsoid.LongitudeIsSymmetric, ellipsoid.BearingIsSymmetric)
+
+			// Calculate the distance and bearing from SFO to LAX.
+			targetDistance, targetDir = geo1.To(targetLat, targetLon, currentLat, currentLon)
+			InfoLogger.Printf("Distance = %v Bearing = %v\n", targetDistance, targetDir)
+
+			InfoLogger.Println("turning to ", targetDistance)
+			
+			naza.SetYaw(&interfaceConf, 70)
+
+			yawTargetLocked = false
+			
+
+			for !yawTargetLocked {
+				currentDir, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
+				liveDiff = utils.CalcDiff(currentDir, int(targetDir))
+				if liveDiff <= targetDiffAccuracy {
+					yawTargetLocked = true
+					InfoLogger.Println("turnto turned to to target deg")
+				}
+			}	
+
+			naza.SetPitch(&interfaceConf, 70)
+
+			if int(targetDistance) <= targetDistanceAccuracy {
+				distanceTargetLocked = true
+				InfoLogger.Println("flytolatlon reached target")
+			}
+			time.Sleep(1* time.Second)
+		}
+		
 		return []byte("flew to given lat lon")
 	})
 
@@ -130,20 +176,32 @@ func main() {
 
 		naza.SetFlightMode(&interfaceConf, "failsafe")
 
-		InfoLogger.Println("landing")
+		InfoLogger.Println("land landing")
 		return []byte("landed")
 	})
 
 	// initiating service to turn drone
 	rcfNode.ServiceCreate(nodeInstance, "turnto", func(params []byte, n rcfNode.Node) []byte {
 		if len(params) == 8 {
-			deg := utils.ByteArrayToInt(params)
-			InfoLogger.Println("turning to ", deg)
-			currentDir, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
-			println(currentDir)
+			targetDir := utils.ByteArrayToInt(params)
+			InfoLogger.Println("turning to ", targetDir)
+			
+			naza.SetYaw(&interfaceConf, 70)
 
-			// ll := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
-			// println(ll["dir"])
+			yawTargetLocked := false
+			liveDiff := 360
+			targetDiffAccuracy := 30 
+
+			for !yawTargetLocked {
+				currentDir, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
+				liveDiff = utils.CalcDiff(currentDir, int(targetDir))
+				if liveDiff <= targetDiffAccuracy {
+					yawTargetLocked = true
+					InfoLogger.Println("turnto turned to to target deg")
+				}
+
+				time.Sleep(1* time.Second)
+			}
 		}
 		return []byte("turned")
 	})
@@ -151,8 +209,28 @@ func main() {
 	// initiating service to change altitude
 	rcfNode.ServiceCreate(nodeInstance, "changealt", func(params []byte, n rcfNode.Node) []byte {
 		if len(params) == 8 {
-			alt := utils.ByteArrayToInt(params)
-			InfoLogger.Println("changing alt to ", alt)
+			targetAlt := utils.ByteArrayToInt(params)
+			InfoLogger.Println("changing alt to ", targetAlt)
+
+			currentAlt, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["alt"])
+			if currentAlt > int(targetAlt) {
+				naza.SetThrottle(&interfaceConf, 40)
+			} else if currentAlt < int(targetAlt) {
+				naza.SetThrottle(&interfaceConf, 60)
+			}
+			
+			altTargetLocked := false
+			liveAlt := 360
+			targetAltAccuracy := 30 
+
+			for !altTargetLocked {
+				currentAlt, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["alt"])
+				liveAlt = utils.CalcDiff(currentAlt, int(targetAlt))
+				if liveAlt <= targetAltAccuracy {
+					altTargetLocked = true
+					InfoLogger.Println("changealt reached target alt")
+				}
+			}
 		}
 		InfoLogger.Println("changing alt")
 		println(string(params))

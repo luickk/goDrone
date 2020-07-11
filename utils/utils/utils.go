@@ -6,6 +6,14 @@ import (
 	"unsafe"
 )
 
+// CalcDiff calculates the difference between two ints 
+func CalcDiff(a, b int) int {
+	if a < b {
+	   return b - a
+	}
+	return a - b
+ }
+
 func EncodeLatLonAlt(lat float64, lon float64, alt float64) []byte {
 	return append(append(Float64bytes(lat), Float64bytes(lon)...), IntToByteArray(int64(alt))...)
 }

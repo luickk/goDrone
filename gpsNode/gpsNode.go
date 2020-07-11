@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+var POSEMULATION bool
+
 // basic logger declarations
 var (
 	InfoLogger    *log.Logger
@@ -24,6 +26,8 @@ func main() {
 	InfoLogger = log.New(os.Stdout, "[gpsNode] INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 	WarningLogger = log.New(os.Stdout, "[gpsNode] WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
 	ErrorLogger = log.New(os.Stdout, "[gpsNode] ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+
+	POSEMULATION = true
 
 	// disableing debug information
 	// InfoLogger.SetOutput(ioutil.Discard)
@@ -69,11 +73,10 @@ func main() {
 		fmt.Printf("Time: %d, %d, %d, %d, %d, %d \n", int(decInfo.Year), int(decInfo.Month), int(decInfo.Day), int(decInfo.Hour), int(decInfo.Minute), int(decInfo.Second))
 		fmt.Printf("HW Version: %d, SW Version: %d \n", int(decInfo.HardwareVersion.Version), int(decInfo.FirmwareVersion.Version))
 
-		// putting sample data into map
+		// putting decoded data into map
 		dataMap := make(map[string]string)
 		dataMap["lat"] = string(utils.Float64bytes(float64(decInfo.Latitude)))
 		dataMap["lon"] = string(utils.Float64bytes(float64(decInfo.Longitude)))
-
 		dataMap["heading"] = strconv.Itoa(int(decInfo.Heading))
 		dataMap["alt"] = strconv.Itoa(int(decInfo.Altitude))
 		dataMap["speed"] = strconv.Itoa(int(decInfo.Speed))
@@ -81,12 +84,30 @@ func main() {
 
 		encodedData, err := rcfUtil.GlobMapEncode(dataMap)
 		encodedDataSlice := []byte(encodedData.Bytes())
+		
+		// generating sample data for emulation
+		sampleDataMap := make(map[string]string)
+		sampleDataMap["lat"] = "49.45300997697536"
+		sampleDataMap["lon"] = "10.96558038704124"
+		sampleDataMap["heading"] = strconv.Itoa(190)
+		sampleDataMap["alt"] = strconv.Itoa(60)
+		sampleDataMap["speed"] = strconv.Itoa(0)
+		sampleDataMap["sats"] = strconv.Itoa(8)
+
+		encodedSampleData, _ := rcfUtil.GlobMapEncode(sampleDataMap)
+		sampleDataMapSlice := []byte(encodedSampleData.Bytes())
+
 		if err != nil {
 			WarningLogger.Println("GlobMapEncode encoding error")
 			WarningLogger.Println(err)
 		} else {
-			// pushing alt value to node, encoded as string. every sent string/ alt value represents one element/ msg in the topic
-			rcfNode.TopicPublishData(nodeInstance, "gpsData", encodedDataSlice)
+			if POSEMULATION {
+				// pushing emulated data map node
+				rcfNode.TopicPublishData(nodeInstance, "gpsData", sampleDataMapSlice)
+			} else {
+				// pushing encoded data map to node
+				rcfNode.TopicPublishData(nodeInstance, "gpsData", encodedDataSlice)
+			}
 		}
 
 		// euals 10 Hz
