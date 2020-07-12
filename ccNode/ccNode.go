@@ -45,7 +45,7 @@ func main() {
 	interfaceConf.StickDir[naza.Tchannel] = "norm"
 	interfaceConf.StickDir[naza.Rchannel] = "rev"
 
-
+	
 	interfaceConf.LeftStickMaxPos = make(map[int]int)
 	interfaceConf.NeutralStickPos = make(map[int]int)
 	interfaceConf.RightStickMaxPos = make(map[int]int)
@@ -100,46 +100,62 @@ func main() {
 			WarningLogger.Println("flytolatlon deconding err")
 		}
 		
-		liveDiff := 360
+		liveDiff, targetHeading := 0, 0
 		targetDiffAccuracy := 30 
 		targetDistanceAccuracy := 10
-		yawTargetLocked := false
-		distanceTargetLocked := false
-		targetDistance, targetDir := 0.0, 0.0
+		yawTargetLocked, distanceTargetReached, isOriented := false, false, false
+		targetDistance, bearing := 0.0, 0.0
+			
+		naza.SetYaw(&interfaceConf, 70)
 
-		for !distanceTargetLocked {
+		// Create Ellipsoid object with WGS84-ellipsoid,
+		// angle units are degrees, distance units are meter.
+		geo1 := ellipsoid.Init("WGS84", ellipsoid.Degrees, ellipsoid.Meter, ellipsoid.LongitudeIsSymmetric, ellipsoid.BearingIsSymmetric)
+		
+		for !distanceTargetReached {
 			currentLat, _ := strconv.ParseFloat(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["lat"], 64)
 			currentLon, _ := strconv.ParseFloat(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["lon"], 64)
 			
-			// Create Ellipsoid object with WGS84-ellipsoid,
-			// angle units are degrees, distance units are meter.
-			geo1 := ellipsoid.Init("WGS84", ellipsoid.Degrees, ellipsoid.Meter, ellipsoid.LongitudeIsSymmetric, ellipsoid.BearingIsSymmetric)
-
 			// Calculate the distance and bearing from SFO to LAX.
-			targetDistance, targetDir = geo1.To(targetLat, targetLon, currentLat, currentLon)
-			InfoLogger.Printf("Distance = %v Bearing = %v\n", targetDistance, targetDir)
-
-			InfoLogger.Println("turning to ", targetDistance)
-			
-			naza.SetYaw(&interfaceConf, 70)
+			targetDistance, bearing = geo1.To(currentLat, currentLon, targetLat, targetLon)
+			targetHeading = utils.BearingToHeadding(int(bearing))
+			InfoLogger.Printf("Distance = %v Bearing = %v target Heading = %v \n", targetDistance, bearing, targetHeading)
 
 			yawTargetLocked = false
 			
-
 			for !yawTargetLocked {
 				currentDir, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
-				liveDiff = utils.CalcDiff(currentDir, int(targetDir))
+				liveDiff = utils.CalcDiff(currentDir, int(targetHeading))
 				if liveDiff <= targetDiffAccuracy {
-					yawTargetLocked = true
-					InfoLogger.Println("turnto turned to to target deg")
+					if !isOriented {
+						isOriented = true
+						yawTargetLocked = true
+						naza.SetYaw(&interfaceConf, 50)
+
+						naza.SetPitch(&interfaceConf, 70)
+
+						InfoLogger.Println("turnto oriented to to target deg")	
+					} else {
+						yawTargetLocked = true
+					}
+				} else {
+					isOriented = false
+					if !isOriented {
+						InfoLogger.Println("turnto angel diff(orienting): ", liveDiff)
+						naza.SetPitch(&interfaceConf, 50)
+						time.Sleep(time.Second * 1)
+						naza.SetYaw(&interfaceConf, 70)			
+					}
 				}
 			}	
 
-			naza.SetPitch(&interfaceConf, 70)
 
 			if int(targetDistance) <= targetDistanceAccuracy {
-				distanceTargetLocked = true
+				distanceTargetReached = true
 				InfoLogger.Println("flytolatlon reached target")
+				naza.SetPitch(&interfaceConf, 50)
+			} else {
+				InfoLogger.Println("flytolatlon approaching target")
 			}
 			time.Sleep(1* time.Second)
 		}
@@ -183,8 +199,8 @@ func main() {
 	// initiating service to turn drone
 	rcfNode.ServiceCreate(nodeInstance, "turnto", func(params []byte, n rcfNode.Node) []byte {
 		if len(params) == 8 {
-			targetDir := utils.ByteArrayToInt(params)
-			InfoLogger.Println("turning to ", targetDir)
+			bearing := utils.ByteArrayToInt(params)
+			InfoLogger.Println("turning to ", bearing)
 			
 			naza.SetYaw(&interfaceConf, 70)
 
@@ -194,7 +210,7 @@ func main() {
 
 			for !yawTargetLocked {
 				currentDir, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
-				liveDiff = utils.CalcDiff(currentDir, int(targetDir))
+				liveDiff = utils.CalcDiff(currentDir, int(bearing))
 				if liveDiff <= targetDiffAccuracy {
 					yawTargetLocked = true
 					InfoLogger.Println("turnto turned to to target deg")

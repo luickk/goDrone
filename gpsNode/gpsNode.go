@@ -89,7 +89,7 @@ func main() {
 		sampleDataMap := make(map[string]string)
 		sampleDataMap["lat"] = "49.45300997697536"
 		sampleDataMap["lon"] = "10.96558038704124"
-		sampleDataMap["heading"] = strconv.Itoa(190)
+		sampleDataMap["heading"] = strconv.Itoa(5)
 		sampleDataMap["alt"] = strconv.Itoa(60)
 		sampleDataMap["speed"] = strconv.Itoa(0)
 		sampleDataMap["sats"] = strconv.Itoa(8)

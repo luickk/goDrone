@@ -6,6 +6,19 @@ import (
 	"unsafe"
 )
 
+// BearingToHeadding calculates the heading from a subjective bearing val
+func BearingToHeadding(bearing int) int {
+	var heading int
+	// eastern half of the compass 0-180 degrees
+	if bearing >= 0 {
+		heading = bearing
+	// western half -1--180
+	} else {
+		heading = 360+bearing
+	}
+	return heading
+}
+
 // CalcDiff calculates the difference between two ints 
 func CalcDiff(a, b int) int {
 	if a < b {
@@ -14,10 +27,12 @@ func CalcDiff(a, b int) int {
 	return a - b
  }
 
+// EncodeLatLonAlt encodes 3d location(lat,lon,alt) coordinates into a 24 byte long byte array 
 func EncodeLatLonAlt(lat float64, lon float64, alt float64) []byte {
 	return append(append(Float64bytes(lat), Float64bytes(lon)...), IntToByteArray(int64(alt))...)
 }
 
+// DecodeLatLonAlt dencodes 3d location(lat,lon,alt) coordinates from a 24 byte long byte array
 func DecodeLatLonAlt(encodedData []byte) (float64, float64, int) {
 	lat, lon, alt := 0.0, 0.0, 0
 	// parsing lat lon from service params
