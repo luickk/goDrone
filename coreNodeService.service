@@ -1,0 +1,14 @@
+[Unit]
+Description=goDrone core Node services
+After=network.target
+
+[Service]
+ExecStart=/bin/bash /home/pi/go/src/goDrone/startCoreNodeBundle.sh
+WorkingDirectory=/home/pi/go/src/goDrone/
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

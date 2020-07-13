@@ -50,7 +50,7 @@ func main() {
 				println("missing arg alt for service takeoff")
 			}
 		} else if string(args[0]) == "land"  && ccConnected{
-		
+			rcfNodeClient.ActionExec(ccClient, "land", []byte(""))
 		} else if string(args[0]) == "markhomepos"  && gpsConnected{
 			rcfNodeClient.ActionExec(ccClient, "markhomepos", []byte(""))
 		} else if string(args[0]) == "turnto" && ccConnected {
@@ -85,6 +85,8 @@ func main() {
 				data_map["cli"] = args[2]
 				rcfNodeClient.TopicPublishGlobData(ccClient, args[1], data_map)
 			}
+		} else if string(args[0]) == "setneutral"  && ccConnected{
+			rcfNodeClient.ActionExec(ccClient, "setneutral", []byte(""))
 		} else if string(args[0]) == "getgps"  && gpsConnected{
 			elements := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
 			fmt.Println(elements)

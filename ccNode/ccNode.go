@@ -253,7 +253,7 @@ func main() {
 		return []byte("changed alt")
 	})
 
-	// initiating service to hold current drones position
+	// initiating action to hold current drones position
 	rcfNode.ActionCreate(nodeInstance, "holdpos", func(params []byte, n rcfNode.Node) {
 		InfoLogger.Println("holding pos")
 
@@ -262,6 +262,14 @@ func main() {
 		} else {
 			InfoLogger.Println("failed to set stick pos to neutral")
 		}
+		naza.SetFlightMode(&interfaceConf, "gps")
+	})
+
+	// initiating action to set all channels to neutral position
+	rcfNode.ActionCreate(nodeInstance, "setneutral", func(params []byte, n rcfNode.Node) {
+		InfoLogger.Println("set stick positions to neutral")
+		
+		naza.SetNeutral(&interfaceConf)
 		naza.SetFlightMode(&interfaceConf, "gps")
 	})
 
