@@ -25,7 +25,7 @@ func main() {
 	// WarningLogger.SetOutput(ioutil.Discard)
 
 	// creating node instance object which contains node struct in which all intern comm channels and topic/ action data maps are contained
-	nodeInstance := rcfNode.Create(32)
+	nodeInstance := rcfNode.Create(1052)
 
 	// initiating node by opening tcp server on node id
 	// strarting action and topic handlers
