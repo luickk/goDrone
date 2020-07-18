@@ -35,21 +35,22 @@ func main() {
 		println("gps conn failed")
 	}
 
-	http.Handle("/", http.FileServer(http.Dir("./userInterface/webInterface/static")))
 	mux := http.NewServeMux()
+	mux.Handle("/", http.FileServer(http.Dir("./userInterface/webInterface/static")))
 	mux.HandleFunc("/reconnect", reconnectHandler)
-	mux.HandleFunc("/takeOffHandler", takeOffHandler)
-	mux.HandleFunc("/landHandler", landHandler)
+	mux.HandleFunc("/takeOff", takeOffHandler)
+	mux.HandleFunc("/land", landHandler)
 	mux.HandleFunc("/markHomePos", markHomePos)
-	mux.HandleFunc("/turntoHandler", turntoHandler)
-	mux.HandleFunc("/flytolatlonHandler", flytolatlonHandler)
-	mux.HandleFunc("/listTopicsHandler", listTopicsHandler)
-	mux.HandleFunc("/setNeutralHandler", setNeutralHandler)
-	mux.HandleFunc("/setStateHandler", setStateHandler)
-	mux.HandleFunc("/getGpsPosHandler", getGpsPosHandler)
-	mux.HandleFunc("/endcomHandler", endcomHandler)
+	mux.HandleFunc("/turnto", turntoHandler)
+	mux.HandleFunc("/flytolatlon", flytolatlonHandler)
+	mux.HandleFunc("/listTopics", listTopicsHandler)
+	mux.HandleFunc("/setNeutral", setNeutralHandler)
+	mux.HandleFunc("/setState", setStateHandler)
+	mux.HandleFunc("/getState", getStateHandler)
+	mux.HandleFunc("/getGpsPos", getGpsPosHandler)
+	mux.HandleFunc("/endcom", endcomHandler)
 
-	http.ListenAndServe(":80", nil)
+	http.ListenAndServe(":80", mux)
 }
 
 func reconnectHandler(w http.ResponseWriter, r *http.Request) {
@@ -202,15 +203,27 @@ func setStateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-func listStatesHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("ariborne: ", airborne)
-	w.Write([]byte("ariborne: " + strconv.FormatBool(airborne)))
+func getStateHandler(w http.ResponseWriter, r *http.Request) {
+	parsedURL, err := url.Parse(r.URL.String())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal server error"))
+		return
+	}
 
-	fmt.Println("gpsConnected: ", gpsConnected)
-	w.Write([]byte("gpsConnected: " + strconv.FormatBool(gpsConnected)))
+	params := parsedURL.Query()
+	state := params.Get("state")
 
-	fmt.Println("ccConnected: ", ccConnected)
-	w.Write([]byte("ccConnected: " + strconv.FormatBool(ccConnected)))
+	if state == "airborne" {
+		fmt.Println("ariborne: ", airborne)
+		w.Write([]byte(state))
+	} else if state == "gpsconnected" {
+		fmt.Println("gpsConnected: ", gpsConnected)
+		w.Write([]byte("gpsConnected: " + strconv.FormatBool(gpsConnected)))
+	} else if state == "ccconnected" {
+		fmt.Println("ccConnected: ", ccConnected)
+		w.Write([]byte("ccConnected: " + strconv.FormatBool(ccConnected)))
+	}
 }
 func getGpsPosHandler(w http.ResponseWriter, r *http.Request) {
 	elements := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
