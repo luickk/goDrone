@@ -27,7 +27,7 @@ func main() {
 	WarningLogger = log.New(os.Stdout, "[gpsNode] WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
 	ErrorLogger = log.New(os.Stdout, "[gpsNode] ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
-	POSEMULATION = true
+	POSEMULATION = false
 
 	// disableing debug information
 	// InfoLogger.SetOutput(ioutil.Discard)

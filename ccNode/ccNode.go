@@ -187,13 +187,12 @@ func main() {
 		return []byte("taken off")
 	})
 
-	// initiating service to land drone
-	rcfNode.ServiceCreate(nodeInstance, "land", func(params []byte, n rcfNode.Node) []byte {
+	// initiating action to land drone
+	rcfNode.ActionCreate(nodeInstance, "land", func(params []byte, n rcfNode.Node) {
 
 		naza.SetFlightMode(&interfaceConf, "failsafe")
 
 		InfoLogger.Println("land landing")
-		return []byte("landed")
 	})
 
 	// initiating service to turn drone
