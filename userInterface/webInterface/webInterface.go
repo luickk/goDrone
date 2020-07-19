@@ -48,8 +48,9 @@ func main() {
 	mux.HandleFunc("/setState", setStateHandler)
 	mux.HandleFunc("/getState", getStateHandler)
 	mux.HandleFunc("/getGpsPos", getGpsPosHandler)
+	mux.HandleFunc("/changeAlt", changeAltHandler)
 	mux.HandleFunc("/endcom", endcomHandler)
-
+	
 	http.ListenAndServe(":80", mux)
 }
 
@@ -81,9 +82,10 @@ func takeOffHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !airborne && !STATELESS {
-		result := rcfNodeClient.ServiceExec(ccClient, "takeoff", utils.IntToByteArray(int64(intAlt)))
+		rcfNodeClient.ServiceExec(ccClient, "takeoff", utils.IntToByteArray(int64(intAlt)))
 		airborne = true
-		fmt.Println(string(result))
+		println("taken off")
+		w.Write([]byte("taken off"))
 	} else {
 		println("can not take of if airborne")
 		w.Write([]byte("can not take of if airborne"))
@@ -142,6 +144,38 @@ func turntoHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func changeAltHandler(w http.ResponseWriter, r *http.Request) {
+	parsedURL, err := url.Parse(r.URL.String())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal server error"))
+		return
+	}
+
+	params := parsedURL.Query()
+	alt, err := strconv.Atoi(params.Get("alt"))
+
+	if err != nil {
+		println("missing arg alt for service change alt")
+		w.Write([]byte("missing arg alt for service change alt"))
+		return
+	}
+
+	if err == nil {
+		if airborne && !STATELESS {
+			result := rcfNodeClient.ServiceExec(ccClient, "changeAlt", utils.IntToByteArray(int64(alt)))
+			fmt.Println(string(result))
+		} else {
+			println("can only change alt if airbrone")
+			w.Write([]byte("can only change alt if airbrone"))
+		}
+	} else {
+		println("change alt conv error")
+		w.Write([]byte("change alt conv error"))
+	}
+
+}
+
 func flytolatlonHandler(w http.ResponseWriter, r *http.Request) {
 	parsedURL, err := url.Parse(r.URL.String())
 	if err != nil {
@@ -183,6 +217,7 @@ func setNeutralHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("can only set to neutral if not airborne"))
 	}
 }
+
 func setStateHandler(w http.ResponseWriter, r *http.Request) {
 	parsedURL, err := url.Parse(r.URL.String())
 	if err != nil {

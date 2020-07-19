@@ -9,7 +9,77 @@
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    </head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script> 
+        $(document).ready(function() {
+          $("#takeOffMan").click(function(e) {
+            e.preventDefault();
+            $.ajax({type: "POST",
+                url: "/takeOff",
+                data: { alt: $("#takeOffAlt").val() },
+                success:function(result) {
+                  alert(result);
+                },
+                error:function(result) {
+                  alert('takeoff api call error');
+                }
+            });
+          });
+          $("#landingMan").click(function(e) {
+            e.preventDefault();
+            $.ajax({type: "POST",
+                url: "/land",
+                data: { },
+                success:function(result) {
+                  alert(result);
+                },
+                error:function(result) {
+                  alert('takeoff api call error');
+                }
+            });
+          });
+          $("#turnToMan").click(function(e) {
+            e.preventDefault();
+            $.ajax({type: "POST",
+                url: "/turnto",
+                data: { alt: $("#turnToDegVal").val() },
+                success:function(result) {
+                  alert(result);
+                },
+                error:function(result) {
+                  alert('takeoff api call error');
+                }
+            });
+          });
+          $("#flyToLatLonMan").click(function(e) {
+            e.preventDefault();
+            $.ajax({type: "POST",
+                url: "/flytolatlon",
+                data: { lat: $("#lat").val(), lat: $("#lon").val() },
+                success:function(result) {
+                  alert(result);
+                },
+                error:function(result) {
+                  alert('takeoff api call error');
+                }
+            });
+          });
+          $("#changeAltMan").click(function(e) {
+            e.preventDefault();
+            $.ajax({type: "POST",
+                url: "/changeAlt",
+                data: { alt: $("#changeAltVal").val() },
+                success:function(result) {
+                  alert(result);
+                },
+                error:function(result) {
+                  alert('takeoff api call error');
+                }
+            });
+          });
+        });
+        </script>
+      </head>
     <body>
         <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
             <a class="navbar-brand" href="#">goDrone Dashboard</a>
@@ -46,20 +116,16 @@
                                     <h5 class="card-title">Actions/ Services</h5>
                                     <h6 class="card-subtitle mb-2 text-muted">Core node services and action</h6>
                                     <div class="btn-group-vertical" style="display: flex; flex:1;">
-                                        <div class="btn-group" role="group" aria-label="Control Modes">
-                                            <button type="button" class="btn btn-success">GPS</button>
-                                            <button type="button" class="btn btn-warning">Atti</button>
-                                            <button type="button" class="btn btn-danger">Failsafe</button>
-                                        </div>
-                                        <button type="button" class="btn btn-danger">TakeOff</button>
-                                        <button type="button" class="btn btn-danger">Land</button>
-                                        <button type="button" class="btn btn-warning">TurnTo</button>
-                                        <input type="text" class="form-control-plaintext" value="deg">
-                                        <button type="button" class="btn btn-warning">FlyToLatLon</button>
-                                        <input type="text" class="form-control-plaintext" value="lat">
-                                        <input type="text" class="form-control-plaintext" value="lon">
-                                        <button type="button" class="btn btn-warning">ChangeAlt</button>
-                                        <input type="text" class="form-control-plaintext" value="alt">
+                                        <button type="button" class="btn btn-danger" id="takeOffMan">TakeOff</button>
+                                        <input type="text" class="form-control-plaintext" value="alt" id="turnToDegVal">
+                                        <button type="button" class="btn btn-danger" id="landingMan">Land</button>
+                                        <button type="button" class="btn btn-warning" id="turnToMan">TurnTo</button>
+                                        <input type="text" class="form-control-plaintext" value="deg" id="">
+                                        <button type="button" class="btn btn-warning" id="flyToLatLonMan">FlyToLatLon</button>
+                                        <input type="text" class="form-control-plaintext" value="lat" id="lat">
+                                        <input type="text" class="form-control-plaintext" value="lon" id="lon">
+                                        <button type="button" class="btn btn-warning" id="changeAltMan">ChangeAlt</button>
+                                        <input type="text" class="form-control-plaintext" value="alt" id="changeAltVal">
                                     </div>
                             </div>
                         </div>
