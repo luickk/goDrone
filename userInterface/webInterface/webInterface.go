@@ -85,20 +85,22 @@ func takeOffHandler(w http.ResponseWriter, r *http.Request) {
 		rcfNodeClient.ServiceExec(ccClient, "takeoff", utils.IntToByteArray(int64(intAlt)))
 		airborne = true
 		println("taken off")
-		w.Write([]byte("taken off"))
+		w.Write([]byte("taken off to: " + strconv.Itoa(intAlt)))
 	} else {
-		println("can not take of if airborne")
-		w.Write([]byte("can not take of if airborne"))
+		println("can not take off if airborne")
+		w.Write([]byte("can not take off if airborne"))
 	}
 }
 
 func landHandler(w http.ResponseWriter, r *http.Request) {
 	if airborne && !STATELESS {
 		rcfNodeClient.ActionExec(ccClient, "land", []byte(""))
+		w.Write([]byte("set control mode to recovery"))
+		airborne = false
 	} else {
 		println("can only land if airborne")
 		w.Write([]byte("can only land if airborne"))
-		airborne = false
+		airborne = true
 	}
 }
 
@@ -131,8 +133,8 @@ func turntoHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		if airborne && !STATELESS {
-			result := rcfNodeClient.ServiceExec(ccClient, "turnto", utils.IntToByteArray(int64(dir)))
-			fmt.Println(string(result))
+			rcfNodeClient.ServiceExec(ccClient, "turnto", utils.IntToByteArray(int64(dir)))
+			w.Write([]byte("turned to given dir"))
 		} else {
 			println("can only rotate drone if airbrone")
 			w.Write([]byte("can only rotate drone if airbrone"))
@@ -163,8 +165,8 @@ func changeAltHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		if airborne && !STATELESS {
-			result := rcfNodeClient.ServiceExec(ccClient, "changeAlt", utils.IntToByteArray(int64(alt)))
-			fmt.Println(string(result))
+			rcfNodeClient.ServiceExec(ccClient, "changealt", utils.IntToByteArray(int64(alt)))
+			w.Write([]byte("reached given alt"))
 		} else {
 			println("can only change alt if airbrone")
 			w.Write([]byte("can only change alt if airbrone"))

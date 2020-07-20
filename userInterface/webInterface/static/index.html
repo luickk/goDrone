@@ -13,10 +13,11 @@
         <script> 
         $(document).ready(function() {
           $("#takeOffMan").click(function(e) {
-            e.preventDefault();
-            $.ajax({type: "POST",
+            $.ajax({
+                method: "GET",
+                async: true,
                 url: "/takeOff",
-                data: { alt: $("#takeOffAlt").val() },
+                data: { alt: $("#takeOffToAltVal").val() },
                 success:function(result) {
                   alert(result);
                 },
@@ -26,8 +27,8 @@
             });
           });
           $("#landingMan").click(function(e) {
-            e.preventDefault();
-            $.ajax({type: "POST",
+            $.ajax({
+                method: "GET",  
                 url: "/land",
                 data: { },
                 success:function(result) {
@@ -39,10 +40,11 @@
             });
           });
           $("#turnToMan").click(function(e) {
-            e.preventDefault();
-            $.ajax({type: "POST",
+            $.ajax({
+                method: "GET",
+                async: true,
                 url: "/turnto",
-                data: { alt: $("#turnToDegVal").val() },
+                data: { dir: $("#turnToDegVal").val() },
                 success:function(result) {
                   alert(result);
                 },
@@ -52,10 +54,11 @@
             });
           });
           $("#flyToLatLonMan").click(function(e) {
-            e.preventDefault();
-            $.ajax({type: "POST",
+            $.ajax({
+                method: "GET",
                 url: "/flytolatlon",
-                data: { lat: $("#lat").val(), lat: $("#lon").val() },
+                async: true,
+                data: { lat: $("#lat").val(), lon: $("#lon").val() },
                 success:function(result) {
                   alert(result);
                 },
@@ -65,8 +68,9 @@
             });
           });
           $("#changeAltMan").click(function(e) {
-            e.preventDefault();
-            $.ajax({type: "POST",
+            $.ajax({
+                method: "GET",
+                async: true,
                 url: "/changeAlt",
                 data: { alt: $("#changeAltVal").val() },
                 success:function(result) {
@@ -117,10 +121,10 @@
                                     <h6 class="card-subtitle mb-2 text-muted">Core node services and action</h6>
                                     <div class="btn-group-vertical" style="display: flex; flex:1;">
                                         <button type="button" class="btn btn-danger" id="takeOffMan">TakeOff</button>
-                                        <input type="text" class="form-control-plaintext" value="alt" id="turnToDegVal">
+                                        <input type="text" class="form-control-plaintext" value="alt" id="takeOffToAltVal">
                                         <button type="button" class="btn btn-danger" id="landingMan">Land</button>
                                         <button type="button" class="btn btn-warning" id="turnToMan">TurnTo</button>
-                                        <input type="text" class="form-control-plaintext" value="deg" id="">
+                                        <input type="text" class="form-control-plaintext" value="deg" id="turnToDegVal">
                                         <button type="button" class="btn btn-warning" id="flyToLatLonMan">FlyToLatLon</button>
                                         <input type="text" class="form-control-plaintext" value="lat" id="lat">
                                         <input type="text" class="form-control-plaintext" value="lon" id="lon">
