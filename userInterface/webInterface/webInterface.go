@@ -252,14 +252,14 @@ func getStateHandler(w http.ResponseWriter, r *http.Request) {
 	state := params.Get("state")
 
 	if state == "airborne" {
-		fmt.Println("ariborne: ", airborne)
-		w.Write([]byte(state))
+		fmt.Println("airborne: ", airborne)
+		w.Write([]byte(strconv.FormatBool(airborne)))
 	} else if state == "gpsconnected" {
 		fmt.Println("gpsConnected: ", gpsConnected)
-		w.Write([]byte("gpsConnected: " + strconv.FormatBool(gpsConnected)))
+		w.Write([]byte(strconv.FormatBool(gpsConnected)))
 	} else if state == "ccconnected" {
 		fmt.Println("ccConnected: ", ccConnected)
-		w.Write([]byte("ccConnected: " + strconv.FormatBool(ccConnected)))
+		w.Write([]byte(strconv.FormatBool(ccConnected)))
 	}
 }
 func getGpsPosHandler(w http.ResponseWriter, r *http.Request) {

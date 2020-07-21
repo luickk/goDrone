@@ -80,6 +80,44 @@
                   alert('takeoff api call error');
                 }
             });
+          });  
+          $("#refresh").click(function(e) {
+            $.ajax({
+                method: "GET",
+                async: true,
+                url: "/getState",
+                data: { state: "airborne" },
+                success:function(result) {
+                  $("#airborneStat").text(result);
+                },
+                error:function(result) {
+                  alert('takeoff api call error');
+                }
+            });
+            $.ajax({
+                method: "GET",
+                async: true,
+                url: "/getState",
+                data: { state: "ccconnected" },
+                success:function(result) {
+                  $("#ccConnectedStat").text(result);
+                },
+                error:function(result) {
+                  alert('takeoff api call error');
+                }
+            });
+            $.ajax({
+                method: "GET",
+                async: true,
+                url: "/getState",
+                data: { state: "gpsconnected" },
+                success:function(result) {
+                  $("#gpsConnectedStat").text(result);
+                },
+                error:function(result) {
+                  alert('takeoff api call error');
+                }
+            });
           });
         });
         </script>
@@ -110,8 +148,6 @@
           
           <main role="main" class="container">
             <div class="jumbotron">
-
-
                 <div class="container">
                     <div class="row row-cols-2">
                         <div class="col">  
@@ -139,10 +175,12 @@
                                 <div class="card-body">
                                 <h5 class="card-title">States</h5>
                                 <ul class="list-group">
-                                    <li class="list-group-item">cc Node connected: </li>
-                                    <li class="list-group-item">gps Node connected: </li>
-                                    <li class="list-group-item">ap Node connected: </li>
-                                    <li class="list-group-item">Airborne: </li>
+                                    <li class="list-group-item">cc Node connected: <p id="ccConnectedStat"></p></li>
+                                    <li class="list-group-item">gps Node connected: <p id="gpsConnectedStat"></p></li>
+                                    <li class="list-group-item">ap Node connected: <p id="apConnectedStat"></p></li>
+                                    <li class="list-group-item">Airborne: <p id="airborneStat"></p></li>
+                                    <button type="button" class="btn btn-warning" id="refresh">Refresh</button>
+
                                   </ul>
                                 </div>
                             </div>
