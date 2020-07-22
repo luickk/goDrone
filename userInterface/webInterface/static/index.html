@@ -81,6 +81,20 @@
                 }
             });
           });  
+          $("#setState").click(function(e) {
+            $.ajax({
+                method: "GET",
+                async: true,
+                url: "/setState",
+                data: { state: $("#stateVal").val(), val: $("#stateValVal").val() },
+                success:function(result) {
+                  alert(result);
+                },
+                error:function(result) {
+                  alert('takeoff api call error');
+                }
+            });
+          });  
           $("#refresh").click(function(e) {
             $.ajax({
                 method: "GET",
@@ -157,15 +171,15 @@
                                     <h6 class="card-subtitle mb-2 text-muted">Core node services and action</h6>
                                     <div class="btn-group-vertical" style="display: flex; flex:1;">
                                         <button type="button" class="btn btn-danger" id="takeOffMan">TakeOff</button>
-                                        <input type="text" class="form-control-plaintext" value="alt" id="takeOffToAltVal">
+                                        <input type="text" class="form-control-plaintext" placeholder="alt" id="takeOffToAltVal">
                                         <button type="button" class="btn btn-danger" id="landingMan">Land</button>
                                         <button type="button" class="btn btn-warning" id="turnToMan">TurnTo</button>
-                                        <input type="text" class="form-control-plaintext" value="heading" id="turnToHeadingVal">
+                                        <input type="text" class="form-control-plaintext" placeholder="heading" id="turnToHeadingVal">
                                         <button type="button" class="btn btn-warning" id="flyToLatLonMan">FlyToLatLon</button>
-                                        <input type="text" class="form-control-plaintext" value="lat" id="lat">
-                                        <input type="text" class="form-control-plaintext" value="lon" id="lon">
+                                        <input type="text" class="form-control-plaintext" placeholder="lat" id="lat">
+                                        <input type="text" class="form-control-plaintext" placeholder="lon" id="lon">
                                         <button type="button" class="btn btn-warning" id="changeAltMan">ChangeAlt</button>
-                                        <input type="text" class="form-control-plaintext" value="alt" id="changeAltVal">
+                                        <input type="text" class="form-control-plaintext" placeholder="alt" id="changeAltVal">
                                     </div>
                             </div>
                         </div>
@@ -180,9 +194,10 @@
                                     <li class="list-group-item">ap Node connected: <p id="apConnectedStat"></p></li>
                                     <li class="list-group-item">Airborne: <p id="airborneStat"></p></li>
                                     <button type="button" class="btn btn-warning" id="refresh">Refresh</button>
-
+                                    <input type="text" class="form-control-plaintext" placeholder="Set state" id="stateVal">
+                                    <input type="text" class="form-control-plaintext" placeholder="to" id="stateValVal">
+                                    <button type="button" class="btn btn-warning" id="setState">setState</button>
                                   </ul>
-                                </div>
                             </div>
                         </div>
                     </div></br>

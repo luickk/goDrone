@@ -253,14 +253,16 @@ func setStateHandler(w http.ResponseWriter, r *http.Request) {
 
 	params := parsedURL.Query()
 	state := params.Get("state")
-	val := params.Get("state")
+	val := params.Get("val")
 
 	if state == "airborne" {
 		if val == "true" {
 			airborne = true
+			w.Write([]byte("set state airborne to true"))
 			InfoLogger.Println("set state airborne to true")
 		} else if val == "false" {
 			airborne = false
+			w.Write([]byte("set state airborne to false"))
 			InfoLogger.Println("set state airborne to false")
 		}
 	}

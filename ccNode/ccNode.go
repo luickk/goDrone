@@ -87,6 +87,7 @@ func main() {
 	// arming motors 
 	rcfNode.ActionCreate(nodeInstance, "armmotors", func(params []byte, n rcfNode.Node) {
 		naza.ArmMotors(&interfaceConf)
+		InfoLogger.Println("armed motors")
 	})
 
 
@@ -147,9 +148,7 @@ func main() {
 						naza.SetYaw(&interfaceConf, 70)			
 					}
 				}
-			}	
-
-
+			}
 			if int(targetDistance) <= targetDistanceAccuracy {
 				distanceTargetReached = true
 				InfoLogger.Println("flytolatlon reached target")
