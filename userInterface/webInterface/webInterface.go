@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
 	utils "goDrone/utils/utils"
+	"log"
+	"os"
 	"net/http"
 	"net/url"
 	rcfNodeClient "rcf/rcfNodeClient"
@@ -20,19 +21,30 @@ var (
 	airborne bool
 )
 
+// basic logger declarations
+var (
+	InfoLogger    *log.Logger
+	WarningLogger *log.Logger
+	ErrorLogger   *log.Logger
+)
+
 func main() {
 	STATELESS = false
 
 	airborne = false
 
+	InfoLogger = log.New(os.Stdout, "[WEB CLIENT] INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	WarningLogger = log.New(os.Stdout, "[WEB CLIENT] WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
+	ErrorLogger = log.New(os.Stdout, "[WEB CLIENT] ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+
 	ccClient, ccConnected = rcfNodeClient.NodeOpenConn(1050)
 	gpsClient, gpsConnected = rcfNodeClient.NodeOpenConn(1051)
 
 	if !ccConnected {
-		println("cc conn failed")
+		ErrorLogger.Println("cc conn failed")
 	}
 	if !gpsConnected {
-		println("gps conn failed")
+		ErrorLogger.Println("gps conn failed")
 	}
 
 	mux := http.NewServeMux()
@@ -58,10 +70,10 @@ func reconnectHandler(w http.ResponseWriter, r *http.Request) {
 	gpsClient, gpsConnected = rcfNodeClient.NodeOpenConn(1051)
 	ccClient, ccConnected = rcfNodeClient.NodeOpenConn(1050)
 	if !ccConnected {
-		println("cc conn failed")
+		ErrorLogger.Println("cc conn failed")
 		w.Write([]byte("could not connect to cc Node"))
 	} else if !gpsConnected {
-		println("gps conn failed")
+		ErrorLogger.Println("gps conn failed")
 		w.Write([]byte("could not connect to gps Node"))
 	}
 }
@@ -70,6 +82,7 @@ func takeOffHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal server error"))
+		ErrorLogger.Println("Internal server error")
 		return
 	}
 
@@ -78,16 +91,16 @@ func takeOffHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.Write([]byte("take off alt conv err"))
-		println("take off alt conv err")
+		WarningLogger.Println("take off alt conv err")
 		return
 	}
 	if !airborne && !STATELESS {
 		rcfNodeClient.ServiceExec(ccClient, "takeoff", utils.IntToByteArray(int64(intAlt)))
 		airborne = true
-		println("taken off")
+		InfoLogger.Println("taken off")
 		w.Write([]byte("taken off to: " + strconv.Itoa(intAlt)))
 	} else {
-		println("can not take off if airborne")
+		WarningLogger.Println("can not take off if airborne")
 		w.Write([]byte("can not take off if airborne"))
 	}
 }
@@ -96,9 +109,10 @@ func landHandler(w http.ResponseWriter, r *http.Request) {
 	if airborne && !STATELESS {
 		rcfNodeClient.ActionExec(ccClient, "land", []byte(""))
 		w.Write([]byte("set control mode to recovery"))
+		InfoLogger.Println("set control mode to recovery")
 		airborne = false
 	} else {
-		println("can only land if airborne")
+		WarningLogger.Println("can only land if airborne")
 		w.Write([]byte("can only land if airborne"))
 		airborne = true
 	}
@@ -108,8 +122,9 @@ func markHomePos(w http.ResponseWriter, r *http.Request) {
 	if !airborne && !STATELESS {
 		rcfNodeClient.ActionExec(ccClient, "markhomepos", []byte(""))
 		w.Write([]byte("set home pos"))
+		InfoLogger.Println("set home pos")
 	} else {
-		println("cannot set home pos if airborne")
+		WarningLogger.Println("cannot set home pos if airborne")
 		w.Write([]byte("cannot set gome pos if airborne"))
 	}
 }
@@ -119,29 +134,31 @@ func turntoHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal server error"))
+		ErrorLogger.Println("Internal server error")
 		return
 	}
 
 	params := parsedURL.Query()
-	dir, err := strconv.Atoi(params.Get("dir"))
+	heading, err := strconv.Atoi(params.Get("heading"))
 
 	if err != nil {
-		println("missing arg deg for service turnto")
-		w.Write([]byte("missing arg deg for service turnto"))
+		WarningLogger.Println("missing arg heading for service turnto")
+		w.Write([]byte("missing arg heading for service turnto"))
 		return
 	}
 
 	if err == nil {
 		if airborne && !STATELESS {
-			rcfNodeClient.ServiceExec(ccClient, "turnto", utils.IntToByteArray(int64(dir)))
-			w.Write([]byte("turned to given dir"))
+			rcfNodeClient.ServiceExec(ccClient, "turnto", utils.IntToByteArray(int64(heading)))
+			w.Write([]byte("turned to given heading"))
+			InfoLogger.Println("turned to given heading")
 		} else {
-			println("can only rotate drone if airbrone")
+			InfoLogger.Println("can only rotate drone if airbrone")
 			w.Write([]byte("can only rotate drone if airbrone"))
 		}
 	} else {
-		println("turnto deg conv error")
-		w.Write([]byte("turnto deg conv error"))
+		WarningLogger.Println("turnto heading conv error")
+		w.Write([]byte("turnto heading conv error"))
 	}
 
 }
@@ -151,6 +168,7 @@ func changeAltHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal server error"))
+		ErrorLogger.Println("Internal server error")
 		return
 	}
 
@@ -158,7 +176,7 @@ func changeAltHandler(w http.ResponseWriter, r *http.Request) {
 	alt, err := strconv.Atoi(params.Get("alt"))
 
 	if err != nil {
-		println("missing arg alt for service change alt")
+		WarningLogger.Println("missing arg alt for service change alt")
 		w.Write([]byte("missing arg alt for service change alt"))
 		return
 	}
@@ -167,12 +185,13 @@ func changeAltHandler(w http.ResponseWriter, r *http.Request) {
 		if airborne && !STATELESS {
 			rcfNodeClient.ServiceExec(ccClient, "changealt", utils.IntToByteArray(int64(alt)))
 			w.Write([]byte("reached given alt"))
+			InfoLogger.Println("reached given alt")
 		} else {
-			println("can only change alt if airbrone")
+			InfoLogger.Println("can only change alt if airbrone")
 			w.Write([]byte("can only change alt if airbrone"))
 		}
 	} else {
-		println("change alt conv error")
+		WarningLogger.Println("change alt conv error")
 		w.Write([]byte("change alt conv error"))
 	}
 
@@ -183,6 +202,7 @@ func flytolatlonHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal server error"))
+		ErrorLogger.Println("Internal server error")
 		return
 	}
 
@@ -191,16 +211,17 @@ func flytolatlonHandler(w http.ResponseWriter, r *http.Request) {
 	lon, errLat := strconv.ParseFloat(params.Get("lon"), 64)
 
 	if errLat == nil || errLon == nil {
-		println("missing arg for service flyToLatLon")
+		WarningLogger.Println("missing arg for service flyToLatLon")
 		w.Write([]byte("missing arg for service flyToLatLon"))
 		return
 	}
 
 	if airborne && !STATELESS {
-		result := rcfNodeClient.ServiceExec(ccClient, "flytolatlon", utils.EncodeLatLonAlt(lat, lon, 0))
-		fmt.Println(string(result))
+		rcfNodeClient.ServiceExec(ccClient, "flytolatlon", utils.EncodeLatLonAlt(lat, lon, 0))
+		InfoLogger.Println("flew to lat lon")
 	} else {
-		println("can only change location if airborne")
+		InfoLogger.Println("can only change location if airborne")
+		w.Write([]byte("can only change location if airborne"))
 	}
 }
 
@@ -214,8 +235,9 @@ func setNeutralHandler(w http.ResponseWriter, r *http.Request) {
 	if !airborne && !STATELESS {
 		rcfNodeClient.ActionExec(ccClient, "setneutral", []byte(""))
 		w.Write([]byte("set stick pos to neutral"))
+		InfoLogger.Println("set stick pos to neutral")
 	} else {
-		println("can only set to neutral if not airborne")
+		InfoLogger.Println("can only set to neutral if not airborne")
 		w.Write([]byte("can only set to neutral if not airborne"))
 	}
 }
@@ -225,6 +247,7 @@ func setStateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal server error"))
+		ErrorLogger.Println("Internal server error")
 		return
 	}
 
@@ -235,8 +258,10 @@ func setStateHandler(w http.ResponseWriter, r *http.Request) {
 	if state == "airborne" {
 		if val == "true" {
 			airborne = true
+			InfoLogger.Println("set state airborne to true")
 		} else if val == "false" {
 			airborne = false
+			InfoLogger.Println("set state airborne to false")
 		}
 	}
 }
@@ -245,6 +270,7 @@ func getStateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal server error"))
+		ErrorLogger.Println("Internal server error")
 		return
 	}
 
@@ -252,19 +278,19 @@ func getStateHandler(w http.ResponseWriter, r *http.Request) {
 	state := params.Get("state")
 
 	if state == "airborne" {
-		fmt.Println("airborne: ", airborne)
+		InfoLogger.Println("airborne: ", airborne)
 		w.Write([]byte(strconv.FormatBool(airborne)))
 	} else if state == "gpsconnected" {
-		fmt.Println("gpsConnected: ", gpsConnected)
+		InfoLogger.Println("gpsConnected: ", gpsConnected)
 		w.Write([]byte(strconv.FormatBool(gpsConnected)))
 	} else if state == "ccconnected" {
-		fmt.Println("ccConnected: ", ccConnected)
+		InfoLogger.Println("ccConnected: ", ccConnected)
 		w.Write([]byte(strconv.FormatBool(ccConnected)))
 	}
 }
 func getGpsPosHandler(w http.ResponseWriter, r *http.Request) {
-	elements := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
-	fmt.Println(elements)
+	gpsSlice := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
+	InfoLogger.Println(gpsSlice)
 }
 func endcomHandler(w http.ResponseWriter, r *http.Request) {
 	rcfNodeClient.NodeCloseConn(ccClient)

@@ -124,8 +124,8 @@ func main() {
 			yawTargetLocked = false
 			
 			for !yawTargetLocked {
-				currentDir, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
-				liveDiff = utils.CalcDiff(currentDir, int(targetHeading))
+				currentHeading, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
+				liveDiff = utils.CalcDiff(currentHeading, int(targetHeading))
 				if liveDiff <= targetDiffAccuracy {
 					if !isOriented {
 						isOriented = true
@@ -134,7 +134,7 @@ func main() {
 
 						naza.SetPitch(&interfaceConf, 70)
 
-						InfoLogger.Println("turnto oriented to to target deg")	
+						InfoLogger.Println("turnto oriented to to target heading")	
 					} else {
 						yawTargetLocked = true
 					}
@@ -208,11 +208,11 @@ func main() {
 			targetDiffAccuracy := 30 
 
 			for !yawTargetLocked {
-				currentDir, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
-				liveDiff = utils.CalcDiff(currentDir, int(bearing))
+				currentHeading, _ := strconv.Atoi(rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")[0]["heading"])
+				liveDiff = utils.CalcDiff(currentHeading, int(bearing))
 				if liveDiff <= targetDiffAccuracy {
 					yawTargetLocked = true
-					InfoLogger.Println("turnto turned to to target deg")
+					InfoLogger.Println("turnto turned to to target heading")
 				}
 
 				time.Sleep(1* time.Second)

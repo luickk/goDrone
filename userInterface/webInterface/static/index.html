@@ -44,7 +44,7 @@
                 method: "GET",
                 async: true,
                 url: "/turnto",
-                data: { dir: $("#turnToDegVal").val() },
+                data: { heading: $("#turnToHeadingVal").val() },
                 success:function(result) {
                   alert(result);
                 },
@@ -160,7 +160,7 @@
                                         <input type="text" class="form-control-plaintext" value="alt" id="takeOffToAltVal">
                                         <button type="button" class="btn btn-danger" id="landingMan">Land</button>
                                         <button type="button" class="btn btn-warning" id="turnToMan">TurnTo</button>
-                                        <input type="text" class="form-control-plaintext" value="deg" id="turnToDegVal">
+                                        <input type="text" class="form-control-plaintext" value="heading" id="turnToHeadingVal">
                                         <button type="button" class="btn btn-warning" id="flyToLatLonMan">FlyToLatLon</button>
                                         <input type="text" class="form-control-plaintext" value="lat" id="lat">
                                         <input type="text" class="form-control-plaintext" value="lon" id="lon">
