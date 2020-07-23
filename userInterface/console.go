@@ -36,7 +36,8 @@ func main() {
 	ErrorLogger = log.New(os.Stdout, "[CONSOLE CLIENT] ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	ccClient, ccConnected := rcfNodeClient.NodeOpenConn(1050)
-	gpsClient, gpsConnected := rcfNodeClient.NodeOpenConn(1051)
+	gpsClient, gpsConnected := rcfNodeClient.NodeOpenConn(1052)
+	apClient, apConnected := rcfNodeClient.NodeOpenConn(1051)
 
 	if !ccConnected {
 		ErrorLogger.Println("cc conn failed")
@@ -44,6 +45,10 @@ func main() {
 	if !gpsConnected {
 		ErrorLogger.Println("gps conn failed")
 	}
+	if !apConnected {
+		ErrorLogger.Println("ap conn failed")
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print("Enter command: ")
@@ -154,10 +159,15 @@ func main() {
 					}
 				}
 			}
+		} else if string(args[0]) == "execmission" {
+			rcfNodeClient.ServiceExec(apClient, "executeMission", []byte("test.mission"))
+		} else if string(args[0]) == "listmissions" {
+			InfoLogger.Println(rcfNodeClient.ServiceExec(apClient, "listMission", []byte("")))
 		} else if string(args[0]) == "getstates" {
 			InfoLogger.Println("ariborne: ", airborne)
 			InfoLogger.Println("gpsConnected: ", gpsConnected)
 			InfoLogger.Println("ccConnected: ", ccConnected)
+			InfoLogger.Println("apConnected: ", apConnected)
 		} else if string(args[0]) == "getgps" && gpsConnected {
 			gpsSlice := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
 			InfoLogger.Println(gpsSlice)
