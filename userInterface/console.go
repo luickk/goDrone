@@ -36,8 +36,8 @@ func main() {
 	ErrorLogger = log.New(os.Stdout, "[CONSOLE CLIENT] ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	ccClient, ccConnected := rcfNodeClient.NodeOpenConn(1050)
-	gpsClient, gpsConnected := rcfNodeClient.NodeOpenConn(1052)
-	apClient, apConnected := rcfNodeClient.NodeOpenConn(1051)
+	gpsClient, gpsConnected := rcfNodeClient.NodeOpenConn(1051)
+	apClient, apConnected := rcfNodeClient.NodeOpenConn(1052)
 
 	if !ccConnected {
 		ErrorLogger.Println("cc conn failed")
@@ -171,7 +171,10 @@ func main() {
 		} else if string(args[0]) == "getgps" && gpsConnected {
 			gpsSlice := rcfNodeClient.TopicPullGlobData(gpsClient, 1, "gpsData")
 			InfoLogger.Println(gpsSlice)
-		} else if string(args[0]) == "endcom" {
+		} else if string(args[0]) == "holdpos" && gpsConnected {
+                        rcfNodeClient.ActionExec(ccClient, "holdpos", []byte(""))
+                        InfoLogger.Println("holding position")
+                } else if string(args[0]) == "endcom" {
 			if len(args) >= 0 {
 				rcfNodeClient.NodeCloseConn(ccClient)
 				rcfNodeClient.NodeCloseConn(gpsClient)

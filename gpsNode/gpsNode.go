@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"goDjiNazaGpsDecoder/djiNazaGpsDecoder"
-	ellipsoid "goDrone/utils/ellipsoid"
 	utils "goDrone/utils/utils"
 	"log"
 	"os"
@@ -75,16 +73,18 @@ func main() {
 
 		// putting decoded data into map
 		dataMap := make(map[string]string)
-		dataMap["lat"] = string(utils.Float64bytes(float64(decInfo.Latitude)))
-		dataMap["lon"] = string(utils.Float64bytes(float64(decInfo.Longitude)))
+		dataMap["lat"] = strconv.FormatFloat(float64(decInfo.Latitude), 'f', 5, 64)
+		dataMap["lon"] = strconv.FormatFloat(float64(decInfo.Longitude), 'f', 5, 64)
 		dataMap["heading"] = strconv.Itoa(int(decInfo.Heading))
 		dataMap["alt"] = strconv.Itoa(int(decInfo.Altitude))
 		dataMap["speed"] = strconv.Itoa(int(decInfo.Speed))
 		dataMap["sats"] = strconv.Itoa(int(decInfo.Satellites))
 
+		// fmt.Println(decInfo.Latitude)
+
 		encodedData, err := rcfUtil.GlobMapEncode(dataMap)
 		encodedDataSlice := []byte(encodedData.Bytes())
-		
+
 		// generating sample data for emulation
 		sampleDataMap := make(map[string]string)
 		sampleDataMap["lat"] = "49.45300997697536"
@@ -116,37 +116,6 @@ func main() {
 
 	rcfNode.ActionCreate(nodeInstance, "markhome", func(params []byte, node rcfNode.Node) {
 		homePos.Lat, homePos.Lon, homePos.Alt = utils.DecodeLatLonAlt(params)
-	})
-
-	rcfNode.ServiceCreate(nodeInstance, "calcDist", func(params []byte, node rcfNode.Node) []byte {
-		lat1, lon1 := 37.619002, -122.374843 //SFO
-		lat2, lon2 := 33.942536, -118.408074 //LAX
-
-		// Create Ellipsoid object with WGS84-ellipsoid,
-		// angle units are degrees, distance units are meter.
-		geo1 := ellipsoid.Init("WGS84", ellipsoid.Degrees, ellipsoid.Meter, ellipsoid.LongitudeIsSymmetric, ellipsoid.BearingIsSymmetric)
-
-		// Calculate the distance and bearing from SFO to LAX.
-		distance, bearing := geo1.To(lat1, lon1, lat2, lon2)
-		fmt.Printf("Distance = %v Bearing = %v\n", distance, bearing)
-
-		// Calculate where you are when going from SFO in
-		// direction 45.0 deg. for 20000 meters.
-		lat3, lon3 := geo1.At(lat1, lon1, 20000.0, 45.0)
-		fmt.Printf("lat3 = %v lon3 = %v\n", lat3, lon3)
-
-		// Convert Lat-Lon-Alt to ECEF.
-		lat4, lon4, alt4 := 39.197807, -77.108574, 55.0 // Some location near Baltimore
-		// that the author of the Perl module geo-ecef used. I reused the coords of the tests.
-		x, y, z := geo1.ToECEF(lat4, lon4, alt4)
-		fmt.Printf("x = %v \ny = %v \nz = %v\n", x, y, z)
-
-		// Convert ECEF to Lat-Lon-Alt.
-		x1, y1, z1 := 1.1042590709397183e+06, -4.824765955871677e+06, 4.0093940281868847e+06
-		lat5, lon5, alt5 := geo1.ToLLA(x1, y1, z1)
-		fmt.Printf("lat5 = %v lon5 = %v alt3 = %v\n", lat5, lon5, alt5)
-
-		return []byte("calced")
 	})
 
 	// halting node so it doesn't quit
